@@ -1,0 +1,17 @@
+# Core RL & Simulation
+torch==2.3.1
+torchvision==0.18.1
+torchaudio==2.3.1
+numpy<2.0.0
+gymnasium
+matplotlib
+tensorboard
+
+# Unitree Specific
+unitree-sdk2py
+
+# Development & Utils
+params-proto==2.10.5
+hydra-core
+tqdm
+pytest
