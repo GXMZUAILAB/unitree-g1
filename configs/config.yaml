@@ -1,0 +1,10 @@
+defaults:
+    - env: g1_dance_config
+    - train: ppo_config
+    - _self_
+
+# Experiment settings
+experiment_name: "g1_dance_baseline"
+run_name: ${experiment_name}
+checkpoint: null
+headless: true

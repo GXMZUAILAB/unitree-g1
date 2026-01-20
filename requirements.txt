@@ -1,0 +1,18 @@
+# Unitree G1 RL Project Requirements
+# 注意：大部分机器学习与仿真依赖 (Torch, Isaac Gym/Lab, RSL_RL) 由 Isaac Lab 环境统一管理。
+# 本文件仅列出额外需要的工具库。
+
+# Unitree Robot SDK
+unitree-sdk2py # 宇树机器人SDK
+
+# Configuration & Utils (Common in RSL_RL workflows)
+hydra-core # 实验配置管理工具
+params-proto==2.10.5 # 参数管理工具
+tqdm # 进度条工具
+tensorboard # 可视化工具
+matplotlib # 绘图工具
+pytest # 测试工具
+
+# Optional: Linters (可选)
+# black # 代码格式化工具
+# flake8 # 代码风格检查工具

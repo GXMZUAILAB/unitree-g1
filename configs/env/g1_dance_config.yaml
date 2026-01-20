@@ -1,0 +1,20 @@
+env:
+    num_envs: 4096
+    num_observations: 100
+    num_actions: 23
+    env_spacing: 3.0
+    episode_length_s: 20
+
+    terrain:
+        mesh_type: "plane"
+
+    commands:
+        curriculum: false
+        max_curriculum: 1.0
+
+    control:
+        # PD 驱动参数 
+        stiffness: 40.0 # P 增益
+        damping: 1.0 # D 增益
+        # 动作缩放：目标角度 = actionScale * 动作 + 默认角度
+        action_scale: 0.25
