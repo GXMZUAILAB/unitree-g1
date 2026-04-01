@@ -13,12 +13,13 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "宇树机器人G1基础环境配置.md",
+                "file": "README.md",
                 "mode": "source",
-                "source": false
+                "source": false,
+                "backlinks": false
               },
               "icon": "lucide-file",
-              "title": "宇树机器人G1基础环境配置"
+              "title": "README"
             }
           }
         ]
@@ -156,21 +157,21 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "宇树机器人G1基础环境配置.md",
+                "file": "README.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "宇树机器人G1基础环境配置 的大纲"
+              "title": "README 的大纲"
             }
           }
-        ]
+        ],
+        "currentTab": 4
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 266.5
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -180,12 +181,15 @@
       "daily-notes:打开/创建今天的日记": false,
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
-      "bases:新建数据库": false
+      "bases:新建数据库": false,
+      "table-editor-obsidian:Advanced Tables Toolbar": false,
+      "markdown-table-editor:Open Markdown Table Editor": false
     }
   },
   "active": "1ca7362439849c9b",
   "lastOpenFiles": [
-    "欢迎.md",
-    "宇树机器人G1基础环境配置.md"
+    "README.md",
+    "宇树机器人G1基础环境配置.md",
+    "欢迎.md"
   ]
 }
