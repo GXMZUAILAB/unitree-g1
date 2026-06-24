@@ -1,0 +1,42 @@
+# Isaac Sim Docker image (NOT the Dockerfiles we commit)
+# docker/ directory is now committed — contains Dockerfile, docker-compose.yml
+
+# Simulation repos (cloned separately, not committed)
+sim/
+
+# Runtime dirs
+workspace/
+models/
+logs/
+data/
+cache/
+
+# Conda
+envs/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Obsidian
+.obsidian/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Large files
+*.tar.gz
+*.zip
+*.pt
+*.onnx

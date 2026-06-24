@@ -1,0 +1,11 @@
+# Exclude from Docker build context — these are runtime artifacts
+logs/
+models/
+data/
+deploy/
+__pycache__/
+*.pyc
+.venv/
+*.pt
+*.onnx
+*.tar.gz

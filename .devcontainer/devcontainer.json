@@ -1,0 +1,46 @@
+{
+  "name": "G1 RL Training",
+  "build": {
+    "dockerfile": "../docker/Dockerfile",
+    "context": ".."
+  },
+  "runArgs": [
+    "--gpus", "all",
+    "--user", "0:0",
+    "--network=host",
+    "--shm-size=8g"
+  ],
+  "containerEnv": {
+    "ACCEPT_EULA": "Y",
+    "OMNI_KIT_ACCEPT_EULA": "YES",
+    "OMNI_KIT_ALLOW_ROOT": "1",
+    "PRIVACY_CONSENT": "Y"
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.cache/isaac-sim/kit,target=/isaac-sim/kit/cache,type=bind",
+    "source=${localEnv:HOME}/.cache/isaac-sim/ov,target=/root/.cache/ov,type=bind",
+    "source=${localEnv:HOME}/.cache/isaac-sim/pip,target=/root/.cache/pip,type=bind",
+    "source=${localEnv:HOME}/.cache/isaac-sim/glcache,target=/root/.cache/nvidia/GLCache,type=bind",
+    "source=${localEnv:HOME}/.cache/isaac-sim/computecache,target=/root/.nv/ComputeCache,type=bind",
+    "source=${localEnv:HOME}/.cache/isaac-sim/logs,target=/root/.nvidia-omniverse/logs,type=bind",
+    "source=${localEnv:HOME}/.cache/isaac-sim/pip_pkgs,target=/isaac-sim/pip_pkgs,type=bind",
+    "source=${localWorkspaceFolder}/logs,target=/isaac-sim/logs,type=bind",
+    "source=${localWorkspaceFolder}/models,target=/isaac-sim/models,type=bind"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/isaac-sim/kit/python/bin/python3",
+        "python.terminal.activateEnvironment": false
+      }
+    }
+  }
+}

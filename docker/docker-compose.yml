@@ -1,0 +1,55 @@
+# =============================================================================
+# G1 RL Training — Docker Compose
+# =============================================================================
+# 一键启动: docker compose -f docker/docker-compose.yml up
+#
+# 第一次运行会自动拉取 Isaac Sim 基础镜像（23GB）并构建训练容器。
+# 之后修改代码后重建: docker compose -f docker/docker-compose.yml up --build
+# =============================================================================
+
+services:
+  g1-train:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: g1-rl-train:latest
+    runtime: nvidia
+    user: "0:0"
+    network_mode: host
+    shm_size: "8gb"
+
+    environment:
+      - ACCEPT_EULA=Y
+      - OMNI_KIT_ACCEPT_EULA=YES
+      - OMNI_KIT_ALLOW_ROOT=1
+      - PRIVACY_CONSENT=Y
+      - GIT_PYTHON_REFRESH=quiet
+      - DISPLAY=${DISPLAY:-:0}
+
+    volumes:
+      # Isaac Sim cache (persistent across container restarts)
+      - ${HOME}/.cache/isaac-sim/kit:/isaac-sim/kit/cache:rw
+      - ${HOME}/.cache/isaac-sim/ov:/root/.cache/ov:rw
+      - ${HOME}/.cache/isaac-sim/pip:/root/.cache/pip:rw
+      - ${HOME}/.cache/isaac-sim/glcache:/root/.cache/nvidia/GLCache:rw
+      - ${HOME}/.cache/isaac-sim/computecache:/root/.nv/ComputeCache:rw
+      - ${HOME}/.cache/isaac-sim/logs:/root/.nvidia-omniverse/logs:rw
+      - ${HOME}/.cache/isaac-sim/data:/root/.local/share/ov/data:rw
+
+      # Isaac Sim persistent pip packages
+      - ${HOME}/.cache/isaac-sim/pip_pkgs:/isaac-sim/pip_pkgs:rw
+
+      # Project code and data
+      - ../sim:/sim:rw
+      - ../logs:/isaac-sim/logs:rw
+      - ../models:/isaac-sim/models:rw
+      - ../scripts:/workspace/scripts:ro
+
+      # X11 forwarding (for GUI mode)
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${HOME}/.Xauthority:/root/.Xauthority:ro
+
+    # Default: interactive shell
+    stdin_open: true
+    tty: true
+    entrypoint: ["bash"]
