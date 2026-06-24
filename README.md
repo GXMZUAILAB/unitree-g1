@@ -14,7 +14,7 @@
 - 🖥️ **终端怎么用**（连 `cd` 都不会的时候）
 - 🐳 **Docker 到底是什么**（菜谱 vs 厨房）
 - 📝 **Git 能管什么、不能管什么**（为什么 GitHub 不能传 23GB 的镜像）
-- 🐍 **Python/NumPy/PyTorch**（从"print hello"到搭神经网络）
+- 🐍 **Python/NumPy/PyTorch**（从"`print` hello"到搭神经网络）
 - 🔧 **GPU 驱动版本**（580 能跑，595 崩了——查了一下午的 bug）
 - 🤖 **强化学习到底是什么**（训狗的类比，5 分钟看懂）
 - 🚀 **G1 训练实操**（从 `bash scripts/start.sh train` 到看到机器人走路）
