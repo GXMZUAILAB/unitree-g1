@@ -20,6 +20,11 @@ This is a **Unitree G1 humanoid robot reinforcement learning** tutorial and deve
 ## Directory Layout
 ```
 ~/projects/g1-rl/
+├── configs/             # 用户参数配置文件 (g1_config.py)
+├── workspace/           # Docker mount → /workspace inside container
+├── sim/                 # Cloned repos (unitree_rl_lab, unitree_ros, IsaacLab) — gitignored
+├── scripts/             # 3 scripts committed to GitHub
+├── docs/                # 3 beginner tutorials in Chinese
 ├── 0_getting_started/   # Beginner tutorials (terminal, git, RL intro)
 ├── 1_environment/       # Setup tutorials (Docker, GPU, proxy)
 ├── 2_fundamentals/      # Python, Jupyter, PyTorch, RL theory
@@ -55,11 +60,19 @@ cd ~/projects/g1-rl
 # Install training deps (one-time, or after pip_pkgs cleared)
 bash scripts/start.sh install
 
+# 所有训练参数在 configs/g1_config.py 中配置，按功能分为：
+#   TrainConfig  — train / train-gui / resume 共用 (task, num_envs, max_iterations, seed)
+#   PlayConfig   — play 专用 (task, num_envs)
+# 修改后直接生效，不需要环境变量或 CLI 参数
+
 # Headless training (fast, no GUI)
-TRAIN_NUM_ENVS=4 TRAIN_MAX_ITER=20000 bash scripts/start.sh train
+bash scripts/start.sh train
 
 # GUI training (see robots in real-time)
-TRAIN_NUM_ENVS=4 TRAIN_MAX_ITER=500 bash scripts/start.sh train-gui
+bash scripts/start.sh train-gui
+
+# Resume interrupted training (interactive checkpoint selection)
+bash scripts/start.sh resume
 
 # Playback trained model
 bash scripts/start.sh play <run_dir> <checkpoint>
@@ -117,6 +130,15 @@ train.py had two identical `handle_deprecated_rsl_rl_cfg()` calls, reduced to on
 
 **IMPORTANT:** If you re-clone unitree_rl_lab or IsaacLab, re-apply all 4 fixes.
 
+## User Configuration
+
+**所有用户可调参数**: `configs/g1_config.py` — 按功能划分为 TrainConfig 和 PlayConfig。
+
+- `TrainConfig`: task, num_envs (默认4096), max_iterations (默认50000), seed (默认43，-1=随机)
+- `PlayConfig`: task, num_envs (默认32)
+
+修改后直接生效。不要用环境变量 `TRAIN_NUM_ENVS` / `TRAIN_MAX_ITER` / `TRAIN_SEED`（已删除）。
+
 ## Terrain/Scene Configuration
 
 Config file: `sim/unitree_rl_lab/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/g1/29dof/velocity_env_cfg.py`
@@ -126,10 +148,8 @@ Config file: `sim/unitree_rl_lab/source/unitree_rl_lab/unitree_rl_lab/tasks/loco
   - `num_rows=3, num_cols=3`: 3×3 terrain grid
   - `border_width=2.0`: Flat border around terrain (minimal)
   - Total area = `(num_cols × size[1] + 2×border) × (num_rows × size[0] + 2×border)`
-- `RobotEnvCfg.scene.num_envs=4096*4=16384` (line 413): Training env count (override with `TRAIN_NUM_ENVS` env var)
-- `RobotPlayEnvCfg` (line 465): Overrides for playback — inherits terrain config, expands velocity command ranges
-
-**IMPORTANT**: These values may be tuned. Check the actual config file for current values.
+- `RobotEnvCfg.scene.num_envs=4096` (line 413): Training env count (overridden by `configs/g1_config.py` TrainConfig.num_envs)
+- `RobotPlayEnvCfg` (line 465): Overrides for playback — `num_envs=4`, terrain `6×6`
 
 ## Network (China-specific)
 This machine sits behind the GFW. Two proxy layers exist:
