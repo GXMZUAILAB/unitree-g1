@@ -39,4 +39,3 @@ __pycache__/
 *.tar.gz
 *.zip
 *.pt
-*.onnx

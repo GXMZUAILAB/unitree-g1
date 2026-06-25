@@ -30,7 +30,7 @@
 git clone git@github.com:GXMZUAILAB/unitree-g1.git ~/projects/g1-rl
 cd ~/projects/g1-rl
 
-# 2. 搭厨房（拉取 Isaac Sim 镜像，23GB，首次约 30 分钟）
+# 2. 搭厨房（拉取 Isaac Sim 镜像，23GB，首次约 30 分钟；国内代理下可能更久）
 # 国内用户先看 1_environment/1.6_proxy_setup.md 配代理！
 
 # 3. 训练！
@@ -64,6 +64,8 @@ unitree-g1/
 ├── 3_g1_project/          # 🟠 项目实战：架构、start.sh解读、训练、配置
 ├── 4_advanced/            # 🔴 拓展：Git协作、Docker深入、竞赛部署
 ├── notebooks/             # 📓 交互式 Python Notebook（填空式学习）
+├── showcase/              # 🏆 成果展示：训练GIF、截图（文件名即描述）
+├── docs/                  # 📋 项目文档：训练记录、硬件实测、失败分析、架构笔记
 ├── scripts/               # 🔧 一键脚本（你天天跑的）
 ├── docker/                # 🐳 Dockerfile + compose 配置
 ├── .devcontainer/         # 🖥️ VS Code 开发容器
