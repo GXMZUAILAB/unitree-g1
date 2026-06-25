@@ -3,7 +3,7 @@ name = "unitree-g1-rl"
 version = "1.0.0"
 description = "Unitree G1 人形机器人强化学习入门教程 — 从零到行走"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 license = { text = "MIT" }
 authors = [
     { name = "GXMZUAILAB" },

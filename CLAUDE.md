@@ -25,10 +25,21 @@ This is a **Unitree G1 humanoid robot reinforcement learning** tutorial and deve
 ├── sim/                 # Cloned repos (unitree_rl_lab, unitree_ros, IsaacLab) — gitignored
 ├── scripts/             # 3 scripts committed to GitHub
 ├── docs/                # 3 beginner tutorials in Chinese
+├── 0_getting_started/   # Beginner tutorials (terminal, git, RL intro)
+├── 1_environment/       # Setup tutorials (Docker, GPU, proxy)
+├── 2_fundamentals/      # Python, Jupyter, PyTorch, RL theory
+├── 3_g1_project/        # G1 training: architecture, config, play, troubleshooting
+├── 4_advanced/          # Git collab, Docker build, multi-machine deploy
+├── notebooks/           # Interactive Jupyter notebooks
+├── showcase/            # Training results: GIFs, screenshots (filename=description)
+├── docs/                # Project docs: training log, hardware profile, failure analysis
+├── workspace/           # Docker mount → /workspace inside container
+├── sim/                 # Cloned repos (unitree_rl_lab, unitree_ros, IsaacLab) — gitignored
+├── scripts/             # 3 scripts committed to GitHub
 ├── models/ logs/ data/ deploy/   # Runtime dirs, gitignored
 ```
 
-Single source of truth in this repo: `docs/` + `scripts/` + `README.md` (Chinese beginner tutorials).
+Single source of truth in this repo: `0_getting_started/` + `1_environment/` + `2_fundamentals/` + `3_g1_project/` + `4_advanced/` + `scripts/` + `README.md` (Chinese beginner tutorials).
 `sim/`, `workspace/`, `models/`, `logs/` are runtime artifacts and NOT committed.
 
 ## Key Commands
@@ -133,9 +144,9 @@ train.py had two identical `handle_deprecated_rsl_rl_cfg()` calls, reduced to on
 Config file: `sim/unitree_rl_lab/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/g1/29dof/velocity_env_cfg.py`
 
 - `COBBLESTONE_ROAD_CFG` (line 46): Default terrain gen config (training + play both inherit)
-  - `size=(8.0, 8.0)`: Each sub-terrain is 8×8m
-  - `num_rows=6, num_cols=6`: 6×6 terrain grid
-  - `border_width=20.0`: Flat border around terrain
+  - `size=(1.0, 1.0)`: Each sub-terrain is 1×1m (compact for quick training)
+  - `num_rows=3, num_cols=3`: 3×3 terrain grid
+  - `border_width=2.0`: Flat border around terrain (minimal)
   - Total area = `(num_cols × size[1] + 2×border) × (num_rows × size[0] + 2×border)`
 - `RobotEnvCfg.scene.num_envs=4096` (line 413): Training env count (overridden by `configs/g1_config.py` TrainConfig.num_envs)
 - `RobotPlayEnvCfg` (line 465): Overrides for playback — `num_envs=4`, terrain `6×6`
