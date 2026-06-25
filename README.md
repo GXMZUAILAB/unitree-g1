@@ -14,12 +14,12 @@
 - 🖥️ **终端怎么用**（连 `cd` 都不会的时候）
 - 🐳 **Docker 到底是什么**（菜谱 vs 厨房）
 - 📝 **Git 能管什么、不能管什么**（为什么 GitHub 不能传 23GB 的镜像）
-- 🐍 **Python/NumPy/PyTorch**（从"print hello"到搭神经网络）
+- 🐍 **Python/NumPy/PyTorch**（从"`print` hello"到搭神经网络）
 - 🔧 **GPU 驱动版本**（580 能跑，595 崩了——查了一下午的 bug）
 - 🤖 **强化学习到底是什么**（训狗的类比，5 分钟看懂）
 - 🚀 **G1 训练实操**（从 `bash scripts/start.sh train` 到看到机器人走路）
 
-**你走的路，我们走过。你困惑的问题，我们写下来了。**
+
 
 ---
 
@@ -30,7 +30,7 @@
 git clone git@github.com:GXMZUAILAB/unitree-g1.git ~/projects/g1-rl
 cd ~/projects/g1-rl
 
-# 2. 搭厨房（拉取 Isaac Sim 镜像，23GB，首次约 30 分钟）
+# 2. 搭厨房（拉取 Isaac Sim 镜像，23GB，首次约 30 分钟；国内代理下可能更久）
 # 国内用户先看 1_environment/1.6_proxy_setup.md 配代理！
 
 # 3. 训练！
@@ -64,6 +64,8 @@ unitree-g1/
 ├── 3_g1_project/          # 🟠 项目实战：架构、start.sh解读、训练、配置
 ├── 4_advanced/            # 🔴 拓展：Git协作、Docker深入、竞赛部署
 ├── notebooks/             # 📓 交互式 Python Notebook（填空式学习）
+├── showcase/              # 🏆 成果展示：训练GIF、截图（文件名即描述）
+├── docs/                  # 📋 项目文档：训练记录、硬件实测、失败分析、架构笔记
 ├── scripts/               # 🔧 一键脚本（你天天跑的）
 ├── docker/                # 🐳 Dockerfile + compose 配置
 ├── .devcontainer/         # 🖥️ VS Code 开发容器
