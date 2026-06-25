@@ -1,28 +1,30 @@
 #!/bin/bash
 # =============================================================================
-# G1 RL Training Launcher — v2.0
+# G1 RL Training Launcher — v3.0
 # =============================================================================
 # Architecture:
-#   - Config file values (velocity_env_cfg.py) are the SOURCE OF TRUTH
-#   - Env vars (TRAIN_NUM_ENVS, etc.) OVERRIDE config — only when YOU set them
-#   - If you don't set an env var, the config file value is used unchanged
-#   - Interactive menus auto-discover available models — no blind path typing
+#   - Config file (configs/g1_config.py) is the SOURCE OF TRUTH
+#   - ALL user-adjustable parameters live in that config file
+#   - CLI arguments are no longer used for num_envs/max_iterations/seed
+#   - Interactive menus auto-discover available models
 #
 # Quick start:
-#   bash scripts/start.sh              # interactive menu
-#   TRAIN_NUM_ENVS=4096 bash scripts/start.sh train   # one-liner
-#   bash scripts/start.sh play         # auto-lists checkpoints for you
-#   bash scripts/start.sh resume       # resume interrupted training
+#   bash scripts/start.sh train              # training from config defaults
+#   bash scripts/start.sh train-gui          # training + live 3D view
+#   bash scripts/start.sh play               # auto-lists checkpoints
+#   bash scripts/start.sh resume             # resume interrupted training
+#
+# To change parameters:
+#   编辑 configs/g1_config.py，修改后直接生效
+#   不需要设环境变量，不需要 CLI 传参
 # =============================================================================
 set -euo pipefail
 
 # ── User-overridable defaults ─────────────────────────────────────────────
-# TRAIN_NUM_ENVS  — if set, overrides config file's scene.num_envs
-# TRAIN_MAX_ITER  — if set, overrides agent config's max_iterations
-# TRAIN_TASK      — task name (default: Unitree-G1-29dof-Velocity)
-# TRAIN_SEED      — random seed (-1 = random)
-# TRAIN_HEADLESS  — set to 0 for GUI mode (train-gui)
-TRAIN_TASK="${TRAIN_TASK:-Unitree-G1-29dof-Velocity}"
+# All training/play parameters are in configs/g1_config.py
+# TRAIN_TASK — only used to pass a different task to the Python scripts
+#              (default is read from config file)
+TRAIN_TASK="${TRAIN_TASK:-}"
 
 # ── Docker / paths ────────────────────────────────────────────────────────
 IMAGE="nvcr.io/nvidia/isaac-sim:5.1.0"
@@ -30,9 +32,10 @@ SIM_DIR="${HOME}/projects/g1-rl/sim"
 CACHE_DIR="${HOME}/.cache/isaac-sim"
 LOG_DIR="${HOME}/projects/g1-rl/logs"
 PIP_PKGS_DIR="${CACHE_DIR}/pip_pkgs"
+CONFIGS_DIR="${HOME}/projects/g1-rl/configs"
 PIP_MIRROR="https://pypi.tuna.tsinghua.edu.cn/simple"
 
-EXTRA_PYTHONPATH="/sim/IsaacLab/source/isaaclab:/sim/IsaacLab/source/isaaclab_rl:/sim/IsaacLab/source/isaaclab_tasks:/isaac-sim/pip_pkgs:/sim/unitree_rl_lab/source/unitree_rl_lab"
+EXTRA_PYTHONPATH="/sim/IsaacLab/source/isaaclab:/sim/IsaacLab/source/isaaclab_rl:/sim/IsaacLab/source/isaaclab_tasks:/isaac-sim/pip_pkgs:/sim/unitree_rl_lab/source/unitree_rl_lab:/configs"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -56,6 +59,7 @@ DOCKER_BASE="docker run --rm --gpus all --user 0:0 \
   -v ${CACHE_DIR}/logs:/root/.nvidia-omniverse/logs:rw \
   -v ${CACHE_DIR}/data:/root/.local/share/ov/data:rw \
   -v ${PIP_PKGS_DIR}:/isaac-sim/pip_pkgs:rw \
+  -v ${CONFIGS_DIR}:/configs:ro \
   -v ${SIM_DIR}:/sim:rw \
   -v ${LOG_DIR}:/isaac-sim/logs:rw"
 
@@ -67,17 +71,6 @@ ENV_WRAPPER="export GIT_PYTHON_REFRESH=quiet \
   && export LD_PRELOAD=/isaac-sim/kit/libcarb.so \
   && export RESOURCE_NAME=IsaacSim \
   && export PYTHONPATH=\${PYTHONPATH}:${EXTRA_PYTHONPATH}"
-
-# ── Helper: build CLI args from env vars ──────────────────────────────────
-# Only passes flags when env var is set → config file values are preserved
-build_train_args() {
-    local args=""
-    args="${args} --task ${TRAIN_TASK}"
-    [[ -n "${TRAIN_NUM_ENVS:-}" ]] && args="${args} --num_envs ${TRAIN_NUM_ENVS}"
-    [[ -n "${TRAIN_MAX_ITER:-}" ]] && args="${args} --max_iterations ${TRAIN_MAX_ITER}"
-    [[ -n "${TRAIN_SEED:-}" ]]   && args="${args} --seed ${TRAIN_SEED}"
-    echo "${args}"
-}
 
 # ── Helpers: run Python inside Docker ─────────────────────────────────────
 run_python() {
@@ -264,33 +257,22 @@ echo 'All dependencies installed.'
 }
 
 train() {
-    local extra_args="$(build_train_args)"
     echo -e "${GREEN}=== G1 RL Training (headless) ===${NC}"
-    if [[ -n "${TRAIN_NUM_ENVS:-}" ]]; then
-        echo "Envs: ${TRAIN_NUM_ENVS} (env var override)"
-    else
-        echo -e "Envs: from config file (use TRAIN_NUM_ENVS=4096 to override)"
-        echo -e "${YELLOW}⚠  Config default is 16384 envs — may crash on <32GB RAM.${NC}"
-        echo -e "${YELLOW}   Recommended: TRAIN_NUM_ENVS=4096 for 16GB VRAM / 14GB RAM${NC}"
-    fi
-    if [[ -n "${TRAIN_MAX_ITER:-}" ]]; then
-        echo "Iter: ${TRAIN_MAX_ITER}"
-    fi
+    echo -e "Params from: ${CYAN}configs/g1_config.py${NC} (TrainConfig)"
     echo ""
-    run_python "/sim/unitree_rl_lab/scripts/rsl_rl/train.py ${extra_args} --headless"
+    local task_arg=""
+    [[ -n "${TRAIN_TASK:-}" ]] && task_arg="--task ${TRAIN_TASK}"
+    run_python "/sim/unitree_rl_lab/scripts/rsl_rl/train.py ${task_arg} --headless"
     echo -e "${GREEN}Done. Models: ${LOG_DIR}/rsl_rl/unitree_g1_29dof_velocity/${NC}"
 }
 
 train_gui() {
-    local extra_args="$(build_train_args)"
     echo -e "${GREEN}=== G1 RL Training (GUI) ===${NC}"
-    if [[ -n "${TRAIN_NUM_ENVS:-}" ]]; then
-        echo "Envs: ${TRAIN_NUM_ENVS} (CLI override)"
-    else
-        echo "Envs: from config file"
-    fi
+    echo -e "Params from: ${CYAN}configs/g1_config.py${NC} (TrainConfig)"
     echo -e "${YELLOW}Opening Isaac Sim 3D — close window or Ctrl+C to stop.${NC}"
-    run_python_gui "/sim/unitree_rl_lab/scripts/rsl_rl/train.py ${extra_args}"
+    local task_arg=""
+    [[ -n "${TRAIN_TASK:-}" ]] && task_arg="--task ${TRAIN_TASK}"
+    run_python_gui "/sim/unitree_rl_lab/scripts/rsl_rl/train.py ${task_arg}"
     echo -e "${GREEN}Done. Models: ${LOG_DIR}/rsl_rl/unitree_g1_29dof_velocity/${NC}"
 }
 
@@ -299,14 +281,16 @@ resume() {
     local run_name=$(select_run) || return 1
     local checkpoint=$(select_checkpoint "${run_name}") || return 1
 
-    local extra_args="$(build_train_args)"
     echo ""
     echo -e "${GREEN}=== Resuming Training ===${NC}"
     echo "Run:        ${run_name}"
     echo "Checkpoint: ${checkpoint}"
+    echo -e "Params from: ${CYAN}configs/g1_config.py${NC} (TrainConfig)"
     echo ""
+    local task_arg=""
+    [[ -n "${TRAIN_TASK:-}" ]] && task_arg="--task ${TRAIN_TASK}"
     run_python "/sim/unitree_rl_lab/scripts/rsl_rl/train.py \
-        ${extra_args} --headless \
+        ${task_arg} --headless \
         --resume \
         --load_run ${run_name} \
         --checkpoint ${checkpoint}"
@@ -316,7 +300,6 @@ resume() {
 play() {
     local run_name="${1:-}"
     local checkpoint="${2:-}"
-    local play_num_envs="${PLAY_NUM_ENVS:-32}"
 
     # If no args, interactive selection
     if [[ -z "${run_name}" ]] || [[ "${run_name}" == "none" ]]; then
@@ -330,14 +313,15 @@ play() {
     echo -e "${GREEN}=== Playback ===${NC}"
     echo "Run:        ${run_name}"
     echo "Checkpoint: ${checkpoint}"
-    echo "Envs:       ${play_num_envs}"
+    echo -e "Params from: ${CYAN}configs/g1_config.py${NC} (PlayConfig)"
     echo -e "${YELLOW}Opening Isaac Sim 3D — close window or Ctrl+C to stop.${NC}"
     echo ""
     # play.py uses retrieve_file_path(checkpoint) which needs an absolute path
     local ckpt_path="/isaac-sim/logs/rsl_rl/unitree_g1_29dof_velocity/${run_name}/${checkpoint}"
+    local task_arg=""
+    [[ -n "${TRAIN_TASK:-}" ]] && task_arg="--task ${TRAIN_TASK}"
     run_python_gui "/sim/unitree_rl_lab/scripts/rsl_rl/play.py \
-        --task ${TRAIN_TASK} \
-        --num_envs ${play_num_envs} \
+        ${task_arg} \
         --checkpoint ${ckpt_path}"
     echo -e "${GREEN}Done.${NC}"
 }
@@ -379,15 +363,9 @@ case "${1:-menu}" in
         launch_tensorboard
         ;;
     menu|m|"")
-        # Show current config status
-        num_envs_info="from config file"
-        max_iter_info="from config file"
-        [[ -n "${TRAIN_NUM_ENVS:-}" ]] && num_envs_info="${TRAIN_NUM_ENVS}"
-        [[ -n "${TRAIN_MAX_ITER:-}" ]] && max_iter_info="${TRAIN_MAX_ITER}"
-
         echo ""
         echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
-        echo -e "${BLUE}║     G1 RL Training Launcher v2.0        ║${NC}"
+        echo -e "${BLUE}║     G1 RL Training Launcher v3.0        ║${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
         echo ""
         echo -e "  ${GREEN}1${NC}  train          RL training (headless)"
@@ -399,12 +377,11 @@ case "${1:-menu}" in
         echo -e "  ${GREEN}7${NC}  install        Install dependencies (run once first!)"
         echo -e "  ${GREEN}8${NC}  tensorboard    Monitor training curves"
         echo ""
-        echo -e "  ${CYAN}Task:${NC}  ${TRAIN_TASK}"
-        echo -e "  ${CYAN}Envs:${NC}  ${num_envs_info}"
-        echo -e "  ${CYAN}Iter:${NC}  ${max_iter_info}"
+        echo -e "  ${CYAN}Config:${NC} ${YELLOW}configs/g1_config.py${NC}"
+        echo -e "  ${CYAN}Edit:${NC}  修改上面的文件来调整参数 (num_envs, max_iter, seed…)"
         echo ""
-        echo -e "  ${YELLOW}Usage:${NC} TRAIN_NUM_ENVS=4096 bash scripts/start.sh train"
-        echo -e "  ${YELLOW}Play:${NC}  PLAY_NUM_ENVS=4 bash scripts/start.sh play"
+        echo -e "  ${YELLOW}Usage:${NC} bash scripts/start.sh train"
+        echo -e "  ${YELLOW}Play:${NC}  bash scripts/start.sh play"
         echo ""
         echo -n "  Choice (1-8): "
         read -r choice
@@ -423,15 +400,16 @@ case "${1:-menu}" in
     *)
         echo "Usage: bash scripts/start.sh [train|train-gui|resume|play|visualize|shell|install|tensorboard]"
         echo ""
-        echo "Env vars (optional — only set to override config file values):"
-        echo "  TRAIN_NUM_ENVS=4096   # override scene.num_envs"
-        echo "  TRAIN_MAX_ITER=20000  # override max_iterations"
-        echo "  TRAIN_SEED=42         # set random seed (-1 = random)"
+        echo "所有训练/回放参数在 configs/g1_config.py 中配置，按功能分为："
+        echo "  TrainConfig  — train / train-gui / resume 共用"
+        echo "  PlayConfig   — play 专用"
+        echo ""
+        echo "环境变量（可选）："
+        echo "  TRAIN_TASK=Unitree-G1-29dof-Velocity  # 覆盖默认任务名"
         echo ""
         echo "Examples:"
-        echo "  bash scripts/start.sh train              # use config file defaults"
-        echo "  TRAIN_NUM_ENVS=4096 bash scripts/start.sh train  # override num_envs"
-        echo "  bash scripts/start.sh play               # interactive model selection"
-        echo "  bash scripts/start.sh resume             # resume from checkpoint"
+        echo "  bash scripts/start.sh train              # 用 configs/g1_config.py 中的参数训练"
+        echo "  bash scripts/start.sh play               # 交互式选择模型回放"
+        echo "  bash scripts/start.sh resume             # 从 checkpoint 继续训练"
         exit 1 ;;
 esac
