@@ -202,11 +202,15 @@ Same action pipeline:                      Same action pipeline:
 - `deploy/g1_29dof/main.cpp` — Entry point: DDS init, FSM registration, main loop
 - `configs/g1_config.py` — DeployConfig (run_name, checkpoint, robot_ip, robot_deploy_path)
 
-### Deployment Pipeline
+### Deployment Pipeline (Train → Sim2Sim → Sim2Real)
 1. `bash scripts/deploy.sh export` — copies policy.onnx + deploy.yaml from logs/ to deploy/
-2. `bash scripts/deploy.sh push <ip>` — rsync deploy/ to robot
-3. On robot: compile with cmake/make (needs unitree_sdk2, ONNX Runtime)
-4. On robot: `./g1_ctrl --network eth0` — starts DDS, FSM Passive → FixStand → Velocity
+2. **Sim2Sim validation** — `bash scripts/deploy.sh check` then `bash scripts/deploy.sh sim2sim`
+   - MuJoCo simulation (`unitree_mujoco`) verifies the ONNX model in a different physics engine
+   - If the model works in BOTH Isaac Sim AND MuJoCo, it's robust enough for real robot
+   - **Never skip this step** — real robot falls cost money and time
+3. `bash scripts/deploy.sh push <ip>` — rsync deploy/ to robot (AFTER sim2sim passes)
+4. On robot: compile with cmake/make (needs unitree_sdk2, ONNX Runtime)
+5. On robot: `./g1_ctrl --network eth0` — starts DDS, FSM Passive → FixStand → Velocity
 
 ### FSM States (joystick control)
 - Passive (id=1): motors unpowered, robot is limp
