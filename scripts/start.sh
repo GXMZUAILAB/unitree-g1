@@ -96,17 +96,41 @@ run_python_gui() {
         -c "${ENV_WRAPPER} && /isaac-sim/kit/python/bin/python3 $@" 2>&1
 }
 
+launch_tensorboard() {
+    local port=6006
+    local logdir="${LOG_DIR}/rsl_rl/unitree_g1_29dof_velocity"
+    while true; do
+        if ss -tlnp "sport = :${port}" 2>/dev/null | grep -q ":${port}"; then
+            echo -e "${YELLOW}Port ${port} in use.${NC}"
+            if (( port == 6006 )); then
+                echo -n "  Kill old TensorBoard and retry? [Y/n] "
+                read -r yn
+                if [[ "${yn:-y}" =~ ^[Yy]$ ]]; then
+                    fuser -k "${port}/tcp" 2>/dev/null || true
+                    sleep 1
+                    continue
+                fi
+            fi
+            ((port++))
+            echo "  Trying port ${port}..."
+        else
+            echo "http://localhost:${port}"
+            tensorboard --logdir "${logdir}" --bind_all --port "${port}" 2>&1 | grep -v "^NOTE:" | grep -v "^TensorFlow" || true
+            break
+        fi
+    done
+}
 # ── list_runs: discover available training runs ───────────────────────────
 list_runs() {
     local log_root="${LOG_DIR}/rsl_rl/unitree_g1_29dof_velocity"
     if [[ ! -d "${log_root}" ]]; then
-        echo -e "${RED}No training runs found in ${log_root}${NC}"
+        echo -e "${RED}No training runs found in ${log_root}${NC}" >&2
         return 1
     fi
     local runs=()
     while IFS= read -r d; do
         runs+=("$(basename "$d")")
-    done < <(ls -1dt "${log_root}"/ 2>/dev/null)
+    done < <(ls -1dt "${log_root}"/*/ 2>/dev/null)
     echo "${runs[@]}"
 }
 
@@ -127,39 +151,38 @@ list_checkpoints() {
 select_run() {
     local log_root="${LOG_DIR}/rsl_rl/unitree_g1_29dof_velocity"
     if [[ ! -d "${log_root}" ]]; then
-        echo -e "${RED}No training runs found.${NC}"
+        echo -e "${RED}No training runs found.${NC}" >&2
         return 1
     fi
     local runs=()
     while IFS= read -r d; do
-        [[ -n "$d" ]] && runs+=("$d")
-    done < <(ls -1dt "${log_root}"/ 2>/dev/null)
+        runs+=("$(basename "$d")")
+    done < <(ls -1dt "${log_root}"/*/ 2>/dev/null)
 
     if [[ ${#runs[@]} -eq 0 ]]; then
-        echo -e "${RED}No training runs found.${NC}"
+        echo -e "${RED}No training runs found.${NC}" >&2
         return 1
     fi
 
-    echo ""
-    echo -e "${BLUE}=== Available Training Runs ===${NC}"
+    echo "" >&2
+    echo -e "${BLUE}=== Available Training Runs ===${NC}" >&2
     local i=1
     for r in "${runs[@]}"; do
         local ckpt_count=$(ls -1 "${log_root}/${r}"/model_*.pt 2>/dev/null | wc -l)
-        # Show when the run was created (dir name is the timestamp)
-        echo -e "  ${GREEN}${i}${NC} -> ${CYAN}${r}${NC}  (${ckpt_count} checkpoints)"
+        echo -e "  ${GREEN}${i}${NC} -> ${CYAN}${r}${NC}  (${ckpt_count} checkpoints)" >&2
         ((i++))
     done
-    echo ""
+    echo "" >&2
 
     local choice
     while true; do
-        echo -n "  Select run (1-${#runs[@]}): "
+        echo -n "  Select run (1-${#runs[@]}): " >&2
         read -r choice
         if [[ "${choice}" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#runs[@]} )); then
             echo "${runs[$((choice - 1))]}"
             return 0
         fi
-        echo -e "  ${RED}Invalid choice, try again.${NC}"
+        echo -e "  ${RED}Invalid choice, try again.${NC}" >&2
     done
 }
 
@@ -173,33 +196,32 @@ select_checkpoint() {
     done < <(ls -1t "${log_root}"/model_*.pt 2>/dev/null)
 
     if [[ ${#ckpts[@]} -eq 0 ]]; then
-        echo -e "${RED}No checkpoints found in ${run_name}${NC}"
+        echo -e "${RED}No checkpoints found in ${run_name}${NC}" >&2
         return 1
     fi
 
-    # Show most recent 20
     local show_n=20
     if (( ${#ckpts[@]} < show_n )); then show_n=${#ckpts[@]}; fi
 
-    echo ""
-    echo -e "${BLUE}=== Checkpoints in ${CYAN}${run_name}${BLUE} ===${NC}"
-    echo -e "  (showing most recent ${show_n} of ${#ckpts[@]} total)"
+    echo "" >&2
+    echo -e "${BLUE}=== Checkpoints in ${CYAN}${run_name}${BLUE} ===${NC}" >&2
+    echo -e "  (showing most recent ${show_n} of ${#ckpts[@]} total)" >&2
     local i=1
     while (( i <= show_n )); do
-        echo -e "  ${GREEN}${i}${NC} -> ${ckpts[$((i - 1))]}"
+        echo -e "  ${GREEN}${i}${NC} -> ${ckpts[$((i - 1))]}" >&2
         ((i++))
     done
-    echo ""
+    echo "" >&2
 
     local choice
     while true; do
-        echo -n "  Select checkpoint (1-${show_n}): "
+        echo -n "  Select checkpoint (1-${show_n}): " >&2
         read -r choice
         if [[ "${choice}" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= show_n )); then
             echo "${ckpts[$((choice - 1))]}"
             return 0
         fi
-        echo -e "  ${RED}Invalid choice, try again.${NC}"
+        echo -e "  ${RED}Invalid choice, try again.${NC}" >&2
     done
 }
 
@@ -311,11 +333,12 @@ play() {
     echo "Envs:       ${play_num_envs}"
     echo -e "${YELLOW}Opening Isaac Sim 3D — close window or Ctrl+C to stop.${NC}"
     echo ""
+    # play.py uses retrieve_file_path(checkpoint) which needs an absolute path
+    local ckpt_path="/isaac-sim/logs/rsl_rl/unitree_g1_29dof_velocity/${run_name}/${checkpoint}"
     run_python_gui "/sim/unitree_rl_lab/scripts/rsl_rl/play.py \
         --task ${TRAIN_TASK} \
         --num_envs ${play_num_envs} \
-        --load_run ${run_name} \
-        --checkpoint ${checkpoint}"
+        --checkpoint ${ckpt_path}"
     echo -e "${GREEN}Done.${NC}"
 }
 
@@ -353,13 +376,12 @@ case "${1:-menu}" in
     shell|s|bash|sh)       shell ;;
     tensorboard|tb)
         echo -e "${GREEN}=== TensorBoard ===${NC}"
-        echo "Open http://localhost:6006 in browser"
-        tensorboard --logdir "${LOG_DIR}/rsl_rl/unitree_g1_29dof_velocity" --bind_all --port 6006
+        launch_tensorboard
         ;;
     menu|m|"")
         # Show current config status
-        local num_envs_info="from config file"
-        local max_iter_info="from config file"
+        num_envs_info="from config file"
+        max_iter_info="from config file"
         [[ -n "${TRAIN_NUM_ENVS:-}" ]] && num_envs_info="${TRAIN_NUM_ENVS}"
         [[ -n "${TRAIN_MAX_ITER:-}" ]] && max_iter_info="${TRAIN_MAX_ITER}"
 
@@ -390,18 +412,11 @@ case "${1:-menu}" in
             1|train|t)               train ;;
             2|train-gui|tg)          train_gui ;;
             3|resume|r)              resume ;;
-            4|play|p)
-                echo -e "${YELLOW}Select model to play:${NC}"
-                local rd=$(select_run) || exit 1
-                local ck=$(select_checkpoint "${rd}") || exit 1
-                play "${rd}" "${ck}"
-                ;;
+            4|play|p)                play "" ""  ;;
             5|visualize|gui|vis|v)  visualize ;;
             6|shell|s|bash|sh)       shell ;;
             7|install|i)             install ;;
-            8|tensorboard|tb)
-                tensorboard --logdir "${LOG_DIR}/rsl_rl/unitree_g1_29dof_velocity" --bind_all --port 6006
-                ;;
+            8|tensorboard|tb)       launch_tensorboard ;;
             *) echo -e "${RED}Unknown: ${choice}${NC}" ;;
         esac
         ;;
