@@ -4,6 +4,10 @@
 >
 > 不需要机器学习背景。不需要懂 Linux。打开终端，跟着走——我们一路摸排过来的。
 
+<p align="center">
+  <img src="showcase/gifs/小幅行走(20260624-4096envs-182ckpts-18100.pt).gif" alt="G1 小幅行走 — 4096 envs, 182 ckpts" width="480">
+</p>
+
 ---
 
 ## 这是什么？
